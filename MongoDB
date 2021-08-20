@@ -1,0 +1,70 @@
+import json
+import requests
+import pymongo
+
+base_url = 'http://{domain}/findWally'
+result = requests.get(base_url)
+Mongo_url = 'http://{domain}/createNews'
+arr = []
+def extract(obj, arr, val):  
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if isinstance(v, dict):               
+                extract(v, arr, val)
+            elif isinstance(v, list):
+                if val in v:
+                    arr.append(k)
+                else:
+                    extract(v, arr, val)
+            elif v == val:
+                arr.append(k)
+    elif isinstance(obj, list):
+        for item in obj:
+            if isinstance(item, dict):  
+                extract(item, arr, val)   
+            elif isinstance(item, list):
+                if val in item:
+                    arr.append(item)
+                else:
+                    extract(item, arr, val)
+            elif item == val:
+                arr.append(sub_arr)    
+    return arr
+    
+def create_Mongo(Mongo_url, result, value):
+    lst = []
+    count = 1
+    myclient = pymongo.MongoClient(Mongo_url)
+    mydb = myclient.mydatabase
+    mycol = mydb.values
+    api_value = extract(result, arr, value)
+    for i in api_value:
+        sub_dic = {}
+        sub_dic[count] = i
+        lst.append(sub_dic)
+        count += 1
+    x = mycol.insert_many(lst)
+
+obj =  {
+        "News": [
+            {
+                "Title": "NewsA",
+                "Tags": ["Gossiping"],
+                "Date": "2021/06/26",
+                "Detail": {
+                    "Author": "Wally",
+                    "Content": "Hello World"
+                }
+            },
+            {
+                "Title": "NewsB",
+                "Tags": ["Social", "Wally"],
+                "Date": "2021/06/27",
+                "Detail": {
+                    "Author": "Andy",
+                    "Content": "Taiwan NO.1"
+                }
+            }
+        ]
+    }
+print(extract(obj, arr, "Wally"))
